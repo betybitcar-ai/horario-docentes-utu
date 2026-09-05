@@ -1,0 +1,14 @@
+{
+  "name": "horario-docentes",
+  "version": "1.1.0",
+  "description": "Sistema de gestión de horarios docentes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2"
+  }
+}

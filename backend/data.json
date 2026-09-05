@@ -1,0 +1,41 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "betina bitancort",
+      "email": "betyvitcar@gmail.com",
+      "password": "$2a$10$zBuLBXcNQEwnELYjxkcT9uVdSboAm5JJTexjv.58knSp0mQtwaXaq",
+      "role": "admin",
+      "created_at": "2026-09-05T14:46:16.577Z"
+    },
+    {
+      "id": 2,
+      "name": "Bety Bitcar",
+      "email": "betybitcar@gmail.com",
+      "password": "$2a$10$uhewT5/hp/yyjwEqMJktNus/wRjywSqyEFbENv/7k4nNU/wGyp0Te",
+      "role": "admin",
+      "created_at": "2026-09-05T14:49:04.507Z"
+    },
+    {
+      "id": 3,
+      "name": "Bety Bitcar",
+      "email": "bitanacarneiroo25@gmail.com",
+      "password": "$2a$10$8j2OcvrPRVi18dbOrInxBO0sc7FJDBKf7YUgWMnRD0weN9xB.3w/.",
+      "role": "profesor",
+      "created_at": "2026-09-05T14:53:46.185Z"
+    },
+    {
+      "id": 4,
+      "name": "Bety Bitcar",
+      "email": "betinacaeneiro25@gmail.com",
+      "password": "$2a$10$5keYpGr5uejyQe4Q29eGHeAribTLZOFa.qaMdK7ewa703ZJ4/Mv3y",
+      "role": "profesor",
+      "created_at": "2026-09-05T15:05:49.233Z"
+    }
+  ],
+  "schedules": [],
+  "availability": [],
+  "news": [],
+  "opinions": [],
+  "violations": []
+}
