@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduSync - Gestión Académica</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
   <style>
@@ -14,7 +12,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
-    /* Contenedor flotante para el Robot 3D */
+    /* Contenedor flotante para el Robot 3D (Oculto inicialmente) */
     .robot-3d-container {
       position: fixed;
       bottom: 20px;
@@ -28,6 +26,7 @@
       background: white;
       overflow: hidden;
       transition: transform 0.3s ease;
+      display: none; /* Oculto por defecto */
     }
 
     .robot-3d-container:hover {
@@ -77,33 +76,32 @@
 </head>
 <body>
 
-  <!-- Barra de Navegación -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-    <div class="container">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-4">
+    <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="#">🎓 EduSync</a>
-      <span class="navbar-text text-light">Sistema de Gestión Institucional</span>
+      <div class="d-flex align-items-center">
+        <span id="userInfo" class="text-light me-3 small fw-semibold"></span>
+        <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal" id="loginBtnText">Iniciar Sesión</button>
+      </div>
     </div>
   </nav>
 
-  <!-- Contenido Principal -->
   <div class="container my-5">
     <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
       <div class="container-fluid py-3">
         <h1 class="display-5 fw-bold text-primary">Bienvenido a EduSync</h1>
         <p class="col-md-8 fs-4 text-muted">Plataforma integral para consulta de cursos, horarios institucionales (como 3º BT Tecnologías de la Información), control de ausencias y asistencia inteligente con IA.</p>
         <hr class="my-4">
-        <p>Utiliza el robot 3D interactivo en la esquina inferior derecha para abrir el chat del asistente virtual.</p>
+        <p>El asistente virtual con el robot 3D solo está disponible y visible para usuarios con rol de <b>Profesor</b> o <b>Administrador</b>.</p>
       </div>
     </div>
   </div>
 
-  <!-- Botón / Contenedor del Robot 3D -->
-  <div class="robot-3d-container" id="robotBtn" onclick="toggleChat()" title="Haz clic para hablar con el Robot 3D">
+  <div class="robot-3d-container" id="robotWrapper" onclick="toggleChat()" title="Asistente Virtual 3D">
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.48/build/spline-viewer.js"></script>
-    <spline-viewer url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" style="width: 100%; height: 100%; pointer-events: none;"></spline-viewer>
+    <spline-viewer url="https://prod.spline.design/6Wq1Q7YGyq-iicqP/scene.splinecode" style="width: 100%; height: 100%; pointer-events: none;"></spline-viewer>
   </div>
 
-  <!-- Ventana Desplegable del Chat -->
   <div class="chatbot-container" id="chatContainer">
     <div class="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
       <h6 class="m-0 fw-bold">🤖 Asistente EduSync 3D</h6>
@@ -112,7 +110,7 @@
     
     <div id="chatMessages" class="chat-messages">
       <div class="mb-2 p-2 bg-light rounded text-dark">
-        <b>🤖 Bot:</b> ¡Hola! Soy tu asistente virtual. Pregúntame por los horarios, cursos o avisos institucionales.
+        <b>🤖 Bot:</b> ¡Hola! Soy tu asistente virtual institucional. Pregúntame por los horarios, cursos o listas negras.
       </div>
     </div>
 
@@ -122,8 +120,154 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Acceso a EduSync</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-pills mb-3 justify-content-center" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active btn-sm" id="pills-login-tab" data-bs-toggle="pill" data-bs-target="#pills-login" type="button" role="tab">Iniciar Sesión</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link btn-sm" id="pills-register-tab" data-bs-toggle="pill" data-bs-target="#pills-register" type="button" role="tab">Registrarse</button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="pills-login" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label small">Correo electrónico</label>
+                <input type="email" id="loginEmail" class="form-control form-control-sm" placeholder="correo@ejemplo.com">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">Contraseña</label>
+                <input type="password" id="loginPassword" class="form-control form-control-sm" placeholder="********">
+              </div>
+              <button onclick="loginUser()" class="btn btn-primary w-100 btn-sm">Entrar</button>
+            </div>
+
+            <div class="tab-pane fade" id="pills-register" role="tabpanel">
+              <div class="mb-2">
+                <label class="form-label small">Nombre completo</label>
+                <input type="text" id="regName" class="form-control form-control-sm">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Correo electrónico</label>
+                <input type="email" id="regEmail" class="form-control form-control-sm">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Contraseña</label>
+                <input type="password" id="regPassword" class="form-control form-control-sm">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Rol</label>
+                <select id="regRole" class="form-select form-select-sm" onchange="toggleRoleCode()">
+                  <option value="alumno">Alumno</option>
+                  <option value="profesor">Profesor</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+              <div class="mb-3 d-none" id="codeContainer">
+                <label class="form-label small text-danger">Código especial de rol</label>
+                <input type="text" id="regCode" class="form-control form-control-sm" placeholder="PROFE-2026 o ADMIN-2026">
+              </div>
+              <button onclick="registerUser()" class="btn btn-success w-100 btn-sm">Crear Cuenta</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
+    // Verificar sesión y permisos al cargar la página
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/me');
+        const user = await res.json();
+        
+        const robotWrapper = document.getElementById('robotWrapper');
+        const chatContainer = document.getElementById('chatContainer');
+
+        if (user && user.name) {
+          document.getElementById('userInfo').innerText = `Hola, ${user.name} (${user.role})`;
+          document.getElementById('loginBtnText').innerText = 'Cerrar Sesión';
+          document.getElementById('loginBtnText').setAttribute('onclick', 'logoutUser()');
+          document.getElementById('loginBtnText').removeAttribute('data-bs-toggle');
+
+          // Mostrar el robot 3D EXCLUSIVAMENTE si es profesor o admin
+          if (user.role === 'profesor' || user.role === 'admin') {
+            robotWrapper.style.display = 'block';
+          } else {
+            robotWrapper.style.display = 'none';
+            if (chatContainer) chatContainer.classList.remove('active');
+          }
+        } else {
+          robotWrapper.style.display = 'none';
+        }
+      } catch (e) {
+        console.error("Error al verificar sesión");
+      }
+    });
+
+    function toggleRoleCode() {
+      const role = document.getElementById('regRole').value;
+      const codeContainer = document.getElementById('codeContainer');
+      if (role === 'profesor' || role === 'admin') {
+        codeContainer.classList.remove('d-none');
+      } else {
+        codeContainer.classList.add('d-none');
+      }
+    }
+
+    async function loginUser() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert(data.error || "Error al iniciar sesión");
+      }
+    }
+
+    async function registerUser() {
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const role = document.getElementById('regRole').value;
+      const code = document.getElementById('regCode').value;
+
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role, code })
+      });
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert(data.error || "Error al registrarse");
+      }
+    }
+
+    async function logoutUser() {
+      await fetch('/api/logout', { method: 'POST' });
+      location.reload();
+    }
+
     function toggleChat() {
       const chat = document.getElementById('chatContainer');
       chat.classList.toggle('active');
@@ -138,12 +282,11 @@
     async function sendMessage() {
       const input = document.getElementById('chatInput');
       const messages = document.getElementById('chatMessages');
-      const robotBtn = document.getElementById('robotBtn');
+      const robotBtn = document.getElementById('robotWrapper');
       const text = input.value.trim();
       
       if (!text) return;
 
-      // Mostrar mensaje del usuario
       messages.innerHTML += `<div class="mb-2 p-2 bg-primary-subtle rounded text-end"><b>Tú:</b> ${text}</div>`;
       input.value = '';
       messages.scrollTop = messages.scrollHeight;
@@ -161,13 +304,12 @@
         const data = await res.json();
         const reply = data.answer || data.error || "No se obtuvo respuesta del servidor.";
         
-        // Mostrar respuesta del bot
         messages.innerHTML += `<div class="mb-2 p-2 bg-light rounded text-dark"><b>🤖 Bot:</b><br>${markdownToHtml(reply)}</div>`;
         messages.scrollTop = messages.scrollHeight;
       } catch (e) {
         messages.innerHTML += `<div class="mb-2 p-2 bg-danger-subtle rounded text-danger"><b>Error:</b> No se pudo conectar con el asistente.</div>`;
       } finally {
-        // 🛑 Desactivar modo pensando cuando responda
+        // 🛑 Desactivar modo pensando
         robotBtn.classList.remove('pensando');
       }
     }
