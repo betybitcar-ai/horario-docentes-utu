@@ -1,130 +1,186 @@
-const API = "http://localhost:3000/api";
-let currentUser = null;
-
 document.addEventListener("DOMContentLoaded", () => {
-  show('login');
+    checkSession();
+    loadSchedules();
+    loadNews();
+
+    const authModal = document.getElementById("auth-modal");
+    const btnLoginOpen = document.getElementById("btn-login-open");
+    const btnRegisterOpen = document.getElementById("btn-register-open");
+    const closeModal = document.querySelector(".close-modal");
+    const authForm = document.getElementById("auth-form");
+    const regRole = document.getElementById("reg-role");
+    const codeField = document.getElementById("code-field");
+    const nameField = document.getElementById("name-field");
+    const modalTitle = document.getElementById("modal-title");
+    const modalSubmitBtn = document.getElementById("modal-submit-btn");
+
+    let isLoginMode = false;
+
+    // Mostrar/Ocultar campos de código según el rol seleccionado
+    regRole.addEventListener("change", (e) => {
+        if (e.target.value === "profesor" || e.target.value === "admin") {
+            codeField.style.display = "block";
+        } else {
+            codeField.style.display = "none";
+        }
+    });
+
+    btnLoginOpen.addEventListener("click", () => {
+        isLoginMode = true;
+        modalTitle.textContent = "Iniciar Sesión en EduSync";
+        nameField.style.display = "none";
+        codeField.style.display = "none";
+        document.getElementById("reg-role").parentElement.style.display = "none";
+        modalSubmitBtn.textContent = "Ingresar";
+        authModal.style.display = "block";
+    });
+
+    btnRegisterOpen.addEventListener("click", () => {
+        isLoginMode = false;
+        modalTitle.textContent = "Registro en EduSync";
+        nameField.style.display = "block";
+        document.getElementById("reg-role").parentElement.style.display = "block";
+        if (regRole.value === "profesor" || regRole.value === "admin") {
+            codeField.style.display = "block";
+        }
+        modalSubmitBtn.textContent = "Crear Cuenta";
+        authModal.style.display = "block";
+    });
+
+    closeModal.addEventListener("click", () => {
+        authModal.style.display = "none";
+    });
+
+    // Manejar envío de formulario (Login o Registro)
+    authForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("reg-email").value;
+        const password = document.getElementById("reg-password").value;
+
+        if (isLoginMode) {
+            try {
+                const res = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || "Error al iniciar sesión");
+                }
+            } catch (err) {
+                alert("Error de conexión con el servidor");
+            }
+        } else {
+            const name = document.getElementById("reg-name").value;
+            const role = document.getElementById("reg-role").value;
+            const regCode = document.getElementById("reg-code").value;
+
+            try {
+                const res = await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password, role, regCode })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("¡Usuario registrado con éxito!");
+                    window.location.reload();
+                } else {
+                    alert(data.error || "Error en el registro");
+                }
+            } catch (err) {
+                alert("Error de conexión con el servidor");
+            }
+        }
+    });
+
+    // Chatbot interactivo
+    const btnSendChat = document.getElementById("btn-send-chat");
+    const chatInput = document.getElementById("chat-input");
+    const chatMessages = document.getElementById("chat-messages");
+
+    btnSendChat.addEventListener("click", async () => {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        appendMessage("Tú", message);
+        chatInput.value = "";
+
+        try {
+            const res = await fetch("/api/chatbot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            });
+            const data = await res.json();
+            if (data.answer) {
+                appendMessage("Asistente EduSync", data.answer);
+            } else {
+                appendMessage("Asistente EduSync", data.error || "No se pudo procesar la respuesta.");
+            }
+        } catch (err) {
+            appendMessage("Asistente EduSync", "Error de comunicación con el chatbot.");
+        }
+    });
+
+    function appendMessage(sender, text) {
+        const msgDiv = document.createElement("div");
+        msgDiv.innerHTML = `<strong>${sender}:</strong> ${text.replace(/\n/g, '<br>')}`;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 });
 
-async function login() {
-  const emailInput = document.getElementById("le");
-  const passwordInput = document.getElementById("lp");
-  const msg = document.getElementById("lm");
-  
-  if (!emailInput || !passwordInput) return;
-
-  try {
-    const res = await fetch(`${API}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      currentUser = data.user;
-      loadDashboard();
-    } else {
-      if (msg) msg.innerText = data.error || "Error al iniciar sesión";
+async function checkSession() {
+    try {
+        const res = await fetch("/api/me");
+        const user = await res.json();
+        if (user) {
+            const authContainer = document.getElementById("auth-container");
+            authContainer.innerHTML = `<span>Hola, ${user.name} (${user.role})</span> <button id="btn-logout">Cerrar Sesión</button>`;
+            
+            document.getElementById("btn-logout").addEventListener("click", async () => {
+                await fetch("/api/logout", { method: "POST" });
+                window.location.reload();
+            });
+        }
+    } catch (e) {
+        console.error("No se pudo verificar la sesión");
     }
-  } catch (err) {
-    if (msg) msg.innerText = "Error de conexión con el servidor";
-  }
 }
 
-async function register() {
-  const name = document.getElementById("rn")?.value;
-  const email = document.getElementById("re")?.value;
-  const password = document.getElementById("rp")?.value;
-  const role = document.getElementById("rr")?.value;
-  const code = document.getElementById("rc")?.value;
-  const msg = document.getElementById("rm");
-
-  try {
-    const res = await fetch(`${API}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role, code })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert("¡Usuario registrado con éxito! Inicia sesión.");
-      show('login');
-    } else {
-      if (msg) msg.innerText = data.error || "Error al registrarse";
+async function loadSchedules() {
+    try {
+        const res = await fetch("/api/schedules");
+        const schedules = await res.json();
+        const container = document.getElementById("schedule-results");
+        
+        let html = "<table><tr><th>Día</th><th>Horario</th><th>Materia</th><th>Profesor</th><th>Salón</th></tr>";
+        schedules.forEach(s => {
+            html += `<tr><td>${s.day}</td><td>${s.start_time} - ${s.end_time}</td><td>${s.subject}</td><td>${s.teacher || 'Sin asignar'}</td><td>${s.room}</td></tr>`;
+        });
+        html += "</table>";
+        container.innerHTML = html;
+    } catch (e) {
+        console.error("Error al cargar horarios");
     }
-  } catch (err) {
-    if (msg) msg.innerText = "Error de conexión con el servidor";
-  }
 }
 
-function loadDashboard() {
-  document.getElementById("login")?.classList.add("hidden");
-  document.getElementById("reg")?.classList.add("hidden");
-  document.getElementById("app")?.classList.remove("hidden");
-  
-  const welcome = document.getElementById("welcome");
-  if (welcome && currentUser) {
-    welcome.innerText = `Bienvenido, ${currentUser.name} (${currentUser.role})`;
-  }
-  setupNavigation();
-}
-
-function setupNavigation() {
-  const nav = document.getElementById("nav");
-  if (!nav) return;
-  nav.innerHTML = `
-    <button onclick="showSection('inicio')">INICIO</button>
-    <button onclick="showSection('aviso')">AVISO</button>
-    <button onclick="showSection('ausencia')">AUSENCIA</button>
-    <button onclick="showSection('noticia')">NOTICIA</button>
-    <button onclick="logout()">Cerrar sesión</button>
-  `;
-  showSection('inicio');
-}
-
-function showSection(section) {
-  const content = document.getElementById("content");
-  if (!content) return;
-  content.innerHTML = "";
-  
-  const sections = {
-    inicio: { title: "Inicio", text: "Bienvenido al panel principal de EduSync." },
-    aviso: { title: "Avisos", text: "Consulta los avisos institucionales recientes." },
-    ausencia: { title: "Ausencias", text: "Gestión y control de asistencias y ausencias." },
-    noticia: { title: "Noticias", text: "Entérate de las últimas novedades de la institución." }
-  };
-
-  const current = sections[section] || sections.inicio;
-  content.innerHTML = `
-    <div class="card" style="max-width: 100%;">
-      <h3>${current.title}</h3>
-      <p>${current.text}</p>
-    </div>`;
-}
-
-function logout() {
-  currentUser = null;
-  document.getElementById("app")?.classList.add("hidden");
-  document.getElementById("login")?.classList.remove("hidden");
-  const le = document.getElementById("le");
-  const lp = document.getElementById("lp");
-  if (le) le.value = "";
-  if (lp) lp.value = "";
-}
-
-function show(id) {
-  ["login", "reg", "app"].forEach(sec => {
-    document.getElementById(sec)?.classList.add("hidden");
-  });
-  document.getElementById(id)?.classList.remove("hidden");
-}
-
-function code() {
-  const role = document.getElementById("rr")?.value;
-  const codeInput = document.getElementById("rc");
-  if (!codeInput) return;
-  if (role === "admin" || role === "profesor") {
-    codeInput.classList.remove("hidden");
-  } else {
-    codeInput.classList.add("hidden");
-  }
+async function loadNews() {
+    try {
+        const res = await fetch("/api/news");
+        const news = await res.json();
+        const container = document.getElementById("news-container");
+        
+        let html = "";
+        news.forEach(n => {
+            html += `<div class="news-item"><h3>${n.title}</h3><p>${n.content}</p><small>Por: ${n.author || 'Admin'}</small></div>`;
+        });
+        container.innerHTML = html || "<p>No hay noticias recientes.</p>";
+    } catch (e) {
+        console.error("Error al cargar noticias");
+    }
 }
