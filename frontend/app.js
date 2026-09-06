@@ -1,24 +1,130 @@
-let me=null;const $=x=>document.getElementById(x);
-function show(x){$("login").classList.toggle("hidden",x!=="login");$("reg").classList.toggle("hidden",x!=="reg");$("app").classList.toggle("hidden",x!=="app")}
-function code(){$("rc").classList.toggle("hidden",$("rr").value==="alumno")}
-async function api(u,o={}){let r=await fetch(u,{headers:{"Content-Type":"application/json"},...o}),d=await r.json();if(!r.ok)throw Error(d.error||"Error");return d}
-async function login(){try{me=await api("/api/login",{method:"POST",body:JSON.stringify({email:$("le").value,password:$("lp").value})});start()}catch(e){$("lm").textContent=e.message}}
-async function register(){try{me=await api("/api/register",{method:"POST",body:JSON.stringify({name:$("rn").value,email:$("re").value,password:$("rp").value,role:$("rr").value,code:$("rc").value})});start()}catch(e){$("rm").textContent=e.message}}
-function start(){show("app");$("welcome").textContent=`Bienvenido/a ${me.name} · ${me.role}`;nav();home()}
-function nav(){$("nav").innerHTML=`<button onclick="home()">Inicio</button><button onclick="horarios()">Horarios</button><button onclick="news()">Noticias</button>${me.role!=="alumno"?'<button onclick="availability()">Avisos</button>':""}${me.role==="alumno"?'<button onclick="opinions()">Opiniones</button>':""}${me.role==="admin"?'<button onclick="admin()">Administración</button>':""}<button onclick="logout()">Salir</button>`}
-function home(){$("content").innerHTML=`<div class="panel"><h2>📋 Horarios</h2><p>Consulta la cuadrilla.</p><button onclick="horarios()">Abrir</button></div><div class="panel"><h2>🤖 Chatbot</h2><p>Ayuda con horarios y disponibilidad.</p><button onclick="chat()">Abrir</button></div><div class="panel"><h2>📰 Noticias</h2><p>Actos, reuniones, paros y novedades.</p><button onclick="news()">Ver</button></div>`}
-async function horarios(){let d=await api("/api/schedules");$("content").innerHTML=`<div class="panel full"><h2>📋 Cuadrilla</h2>${me.role!=="alumno"?`<input id="st" placeholder="Profesor"><input id="ss" placeholder="Materia"><select id="sd"><option>Lunes</option><option>Martes</option><option>Miércoles</option><option>Jueves</option><option>Viernes</option></select><input id="si" type="time"><input id="se" type="time"><input id="sr" placeholder="Salón"><button onclick="addS()">Agregar horario</button>`:""}<table class="table"><tr><th>Día</th><th>Hora</th><th>Profesor</th><th>Materia</th><th>Salón</th><th></th></tr>${d.map(x=>`<tr><td>${x.day}</td><td>${x.start_time}-${x.end_time}</td><td>${x.teacher}</td><td>${x.subject}</td><td>${x.room}</td><td>${me.role==="admin"?`<button class="danger" onclick="delS(${x.id})">Borrar</button>`:""}</td></tr>`).join("")}</table></div>`}
-async function addS(){try{await api("/api/schedules",{method:"POST",body:JSON.stringify({teacher:$("st").value,subject:$("ss").value,day:$("sd").value,start_time:$("si").value,end_time:$("se").value,room:$("sr").value})});horarios()}catch(e){alert(e.message)}}
-async function delS(id){await api("/api/schedules/"+id,{method:"DELETE"});horarios()}
-async function news(){let d=await api("/api/news");$("content").innerHTML=`<div class="panel full"><h2>📰 Noticias</h2>${me.role==="admin"?`<input id="nt" placeholder="Título"><input id="ny" placeholder="Tipo: acto, reunión, paro..."><textarea id="nc" placeholder="Contenido"></textarea><button onclick="addN()">Publicar</button>`:""}${d.map(x=>`<div class="item"><b>${x.title}</b> · ${x.type}<p>${x.content}</p></div>`).join("")||"<p>No hay noticias.</p>"}</div>`}
-async function addN(){await api("/api/news",{method:"POST",body:JSON.stringify({title:$("nt").value,type:$("ny").value,content:$("nc").value})});news()}
-async function availability(){let d=await api("/api/availability");$("content").innerHTML=`<div class="panel"><h2>📅 Avisos</h2><input id="as" type="date"><input id="ae" type="date"><input id="ar" placeholder="Motivo"><button onclick="addA()">Guardar</button>${d.map(x=>`<div class="item"><b>${x.teacher}</b><br>${x.start_date} → ${x.end_date}<br>${x.reason}</div>`).join("")}</div>`}
-async function addA(){await api("/api/availability",{method:"POST",body:JSON.stringify({start_date:$("as").value,end_date:$("ae").value,reason:$("ar").value})});availability()}
-function opinions(){$("content").innerHTML=`<div class="panel"><h2>💬 Opinión</h2><input id="ot" placeholder="Profesor"><textarea id="oc" placeholder="Opinión"></textarea><button onclick="sendO()">Enviar</button></div>`}
-async function sendO(){await api("/api/opinions",{method:"POST",body:JSON.stringify({teacher:$("ot").value,content:$("oc").value})});home()}
-async function admin(){let [u,o,v]=await Promise.all([api("/api/users"),api("/api/opinions"),api("/api/violations")]);$("content").innerHTML=`<div class="panel full"><h2>🔐 Administración</h2><h3>Usuarios</h3>${u.map(x=>`<div class="item">${x.name} · ${x.email} · ${x.role}</div>`).join("")}<h3>Opiniones</h3>${o.map(x=>`<div class="item"><b>${x.teacher}</b>: ${x.content} · ${x.student}</div>`).join("")}<h3>🚫 Incumplimientos</h3><input id="vt" placeholder="Profesor"><textarea id="vd" placeholder="Descripción"></textarea><button onclick="addV()">Registrar</button>${v.map(x=>`<div class="item"><b>${x.teacher}</b>: ${x.description}</div>`).join("")}</div>`}
-async function addV(){await api("/api/violations",{method:"POST",body:JSON.stringify({teacher:$("vt").value,description:$("vd").value})});admin()}
-function chat(){$("content").innerHTML=`<div class="panel"><h2>🤖 Chatbot</h2><div id="c" class="chat"><div class="bubble">Hola. Preguntame por horarios, cuadrilla, disponibilidad, noticias u opiniones.</div></div><input id="ci" placeholder="Escribe una pregunta"><button onclick="sendC()">Enviar</button></div>`}
-async function sendC(){let q=$("ci").value;$("c").innerHTML+=`<div class="bubble me">${q}</div>`;let d=await api("/api/chatbot",{method:"POST",body:JSON.stringify({message:q})});$("c").innerHTML+=`<div class="bubble">${d.answer}</div>`;$("ci").value=""}
-async function logout(){await api("/api/logout",{method:"POST"});location.reload()}
-(async()=>{let u=await api("/api/me");if(u){me=u;start()}else show("login")})()
+const API = "http://localhost:3000/api";
+let currentUser = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  show('login');
+});
+
+async function login() {
+  const emailInput = document.getElementById("le");
+  const passwordInput = document.getElementById("lp");
+  const msg = document.getElementById("lm");
+  
+  if (!emailInput || !passwordInput) return;
+
+  try {
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      currentUser = data.user;
+      loadDashboard();
+    } else {
+      if (msg) msg.innerText = data.error || "Error al iniciar sesión";
+    }
+  } catch (err) {
+    if (msg) msg.innerText = "Error de conexión con el servidor";
+  }
+}
+
+async function register() {
+  const name = document.getElementById("rn")?.value;
+  const email = document.getElementById("re")?.value;
+  const password = document.getElementById("rp")?.value;
+  const role = document.getElementById("rr")?.value;
+  const code = document.getElementById("rc")?.value;
+  const msg = document.getElementById("rm");
+
+  try {
+    const res = await fetch(`${API}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, role, code })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("¡Usuario registrado con éxito! Inicia sesión.");
+      show('login');
+    } else {
+      if (msg) msg.innerText = data.error || "Error al registrarse";
+    }
+  } catch (err) {
+    if (msg) msg.innerText = "Error de conexión con el servidor";
+  }
+}
+
+function loadDashboard() {
+  document.getElementById("login")?.classList.add("hidden");
+  document.getElementById("reg")?.classList.add("hidden");
+  document.getElementById("app")?.classList.remove("hidden");
+  
+  const welcome = document.getElementById("welcome");
+  if (welcome && currentUser) {
+    welcome.innerText = `Bienvenido, ${currentUser.name} (${currentUser.role})`;
+  }
+  setupNavigation();
+}
+
+function setupNavigation() {
+  const nav = document.getElementById("nav");
+  if (!nav) return;
+  nav.innerHTML = `
+    <button onclick="showSection('inicio')">INICIO</button>
+    <button onclick="showSection('aviso')">AVISO</button>
+    <button onclick="showSection('ausencia')">AUSENCIA</button>
+    <button onclick="showSection('noticia')">NOTICIA</button>
+    <button onclick="logout()">Cerrar sesión</button>
+  `;
+  showSection('inicio');
+}
+
+function showSection(section) {
+  const content = document.getElementById("content");
+  if (!content) return;
+  content.innerHTML = "";
+  
+  const sections = {
+    inicio: { title: "Inicio", text: "Bienvenido al panel principal de EduSync." },
+    aviso: { title: "Avisos", text: "Consulta los avisos institucionales recientes." },
+    ausencia: { title: "Ausencias", text: "Gestión y control de asistencias y ausencias." },
+    noticia: { title: "Noticias", text: "Entérate de las últimas novedades de la institución." }
+  };
+
+  const current = sections[section] || sections.inicio;
+  content.innerHTML = `
+    <div class="card" style="max-width: 100%;">
+      <h3>${current.title}</h3>
+      <p>${current.text}</p>
+    </div>`;
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById("app")?.classList.add("hidden");
+  document.getElementById("login")?.classList.remove("hidden");
+  const le = document.getElementById("le");
+  const lp = document.getElementById("lp");
+  if (le) le.value = "";
+  if (lp) lp.value = "";
+}
+
+function show(id) {
+  ["login", "reg", "app"].forEach(sec => {
+    document.getElementById(sec)?.classList.add("hidden");
+  });
+  document.getElementById(id)?.classList.remove("hidden");
+}
+
+function code() {
+  const role = document.getElementById("rr")?.value;
+  const codeInput = document.getElementById("rc");
+  if (!codeInput) return;
+  if (role === "admin" || role === "profesor") {
+    codeInput.classList.remove("hidden");
+  } else {
+    codeInput.classList.add("hidden");
+  }
+}
