@@ -85,7 +85,7 @@ db.serialize(() => {
     }
   });
 
-  // Poblar la tabla schedules con el horario exacto del curso 3º MF (Imagen) si está vacía
+  // Poblar la tabla schedules con el horario exacto del curso 3º MF si está vacía
   db.get(`SELECT COUNT(*) as count FROM schedules`, [], (err, row) => {
     if (row && row.count === 0) {
       const scheduleData = [
@@ -146,13 +146,16 @@ db.serialize(() => {
 // ----------------- ENDPOINTS DE AUTENTICACIÓN -----------------
 app.post("/api/register", (req, res) => {
   const { name, email, password, role, code } = req.body;
-  if ((role === 'profesor' && code !== 'PROFE-2026') || (role === 'admin' && code !== 'ADMIN-2026')) {
+  const userRole = role || 'alumno';
+
+  if ((userRole === 'profesor' && code !== 'PROFE-2026') || (userRole === 'admin' && code !== 'ADMIN-2026')) {
     return res.status(400).json({ error: "Código de acceso especial incorrecto para el rol seleccionado." });
   }
-  db.run(`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`, [name, email, password, role || 'alumno'], function(err) {
-    if (err) return res.status(400).json({ error: "El correo ya está registrado." });
+
+  db.run(`INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`, [name, email, password, userRole], function(err) {
+    if (err) return res.status(400).json({ error: "El correo ya está registrado o faltan datos." });
     req.session.userId = this.lastID;
-    req.session.role = role || 'alumno';
+    req.session.role = userRole;
     req.session.name = name;
     res.json({ success: true, message: "Usuario registrado con éxito" });
   });
@@ -296,7 +299,7 @@ app.post("/api/chatbot", async (req, res) => {
   }
 
   if (req.session.role === 'alumno') {
-    return res.status(403).json({ error: "El asistente virtual (chatbot) es exclusivo para profesores y administradores. Los alumnos solo pueden visualizar los avisos, noticias y horarios publicados." });
+    return res.status(403).json({ error: "El asistente virtual (chatbot) es exclusivo para profesores y administradores." });
   }
 
   const { message } = req.body;
