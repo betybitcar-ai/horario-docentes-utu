@@ -20,7 +20,7 @@ const db = new sqlite3.Database('./edusync.db', (err) => {
   else console.log("Conectado a la base de datos SQLite.");
 });
 
-// Crear tablas necesarias si no existen
+// Crear tablas necesarias y poblar datos iniciales
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +38,7 @@ db.serialize(() => {
     start_time TEXT,
     end_time TEXT,
     room TEXT,
-    status TEXT DEFAULT 'disponible'
+    status TEXT DEFAULT 'ocupado'
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS absences (
@@ -62,6 +62,85 @@ db.serialize(() => {
     content TEXT,
     date TEXT
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS courses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    subsyst TEXT,
+    entry_profile TEXT,
+    duration TEXT,
+    description TEXT
+  )`);
+
+  // Insertar el curso de Tecnologías de la Información si no existe
+  db.get(`SELECT COUNT(*) as count FROM courses WHERE name LIKE ?`, ['%Tecnologías de la Información%'], (err, row) => {
+    if (row && row.count === 0) {
+      db.run(`INSERT INTO courses (name, subsyst, entry_profile, duration, description) VALUES (?, ?, ?, ?, ?)`, [
+        "Bachillerato Tecnológico (BT) en Tecnologías de la Información - 3º MF",
+        "Dirección Técnica de Gestión Académica (DGETP - UTU)",
+        "Egresados de la Educación Media Básica en sus diversas modalidades",
+        "3 años",
+        "Enfocada en áreas de innovación tecnológica, desarrollo de software, aplicaciones web interactivas, bases de datos, redes, ciberseguridad e inteligencia artificial, promoviendo la solución de problemas reales del sector productivo digital."
+      ]);
+    }
+  });
+
+  // Poblar la tabla schedules con el horario exacto del curso 3º MF (Imagen) si está vacía
+  db.get(`SELECT COUNT(*) as count FROM schedules`, [], (err, row) => {
+    if (row && row.count === 0) {
+      const scheduleData = [
+        // LUNES
+        ['PRATS MONICA', 'EMPREDEDURISMO', 'LUNES', '07:30', '08:15', 'Salón 1'],
+        ['PRATS MONICA', 'EMPREDEDURISMO', 'LUNES', '08:15', '09:00', 'Salón 1'],
+        ['MANASSI, MARIA', 'INGLÉS', 'LUNES', '09:05', '09:50', 'Salón 1'],
+        ['MANASSI, MARIA', 'INGLÉS', 'LUNES', '09:50', '10:35', 'Salón 1'],
+        ['DEL RIO ANTONELLA', 'FILOSOFÍA', 'LUNES', '10:40', '11:25', 'Salón 1'],
+        ['BRUNO, CORNELUS', 'PROGRAMACIÓN', 'LUNES', '11:25', '12:10', 'Salón 1'],
+        ['BRUNO, CORNELUS', 'PROGRAMACIÓN', 'LUNES', '12:15', '13:00', 'Salón 1'],
+        
+        // MARTES
+        ['BRUNO, CORNELUS', 'PROGRAMACIÓN', 'MARTES', '07:30', '08:15', 'Salón 1'],
+        ['PEREIRA SAUL', 'MATEMATICA CTS', 'MARTES', '08:15', '09:00', 'Salón 1'],
+        ['PEREIRA SAUL', 'CALCULO', 'MARTES', '09:05', '09:50', 'Salón 1'],
+        ['PEREIRA SAUL', 'CALCULO', 'MARTES', '09:50', '10:35', 'Salón 1'],
+        ['MANASSI, MARIA', 'INGLÉS', 'MARTES', '10:40', '11:25', 'Salón 1'],
+        ['MANASSI, MARIA', 'INGLÉS', 'MARTES', '11:25', '12:10', 'Salón 1'],
+        ['MESINGUER ANA', 'SOCIOLOGÍA', 'MARTES', '12:15', '13:00', 'Salón 1'],
+        ['MESINGUER ANA', 'SOCIOLOGÍA', 'MARTES', '13:05', '13:50', 'Salón 1'],
+
+        // MIÉRCOLES
+        ['MARTÍN TULIPANO', 'FÍSICA', 'MIÉRCOLES', '07:30', '08:15', 'Salón 1'],
+        ['PEREIRA SAUL', 'MATEMATICA CTS', 'MIÉRCOLES', '08:15', '09:00', 'Salón 1'],
+        ['PEREIRA SAUL', 'MATEMATICA CTS', 'MIÉRCOLES', '09:05', '09:50', 'Salón 1'],
+        ['KAISER MARCOS', 'TUTORIAS UTULAB', 'MIÉRCOLES', '09:50', '10:35', 'UTULAB'],
+        ['KAISER MARCOS', 'TUTORIAS UTULAB', 'MIÉRCOLES', '10:40', '11:25', 'UTULAB'],
+        ['BRUNO, CORNELUS', 'PROGRAMACIÓN', 'MIÉRCOLES', '11:25', '12:10', 'Salón 1'],
+        ['BRUNO, CORNELUS', 'PROGRAMACIÓN', 'MIÉRCOLES', '12:15', '13:00', 'Salón 1'],
+
+        // JUEVES
+        ['MARTÍN TULIPANO', 'FÍSICA', 'JUEVES', '07:30', '08:15', 'Salón 1'],
+        ['MARTÍN TULIPANO', 'FÍSICA', 'JUEVES', '08:15', '09:00', 'Salón 1'],
+        ['DEL RIO ANTONELLA', 'FILOSOFÍA', 'JUEVES', '09:05', '09:50', 'Salón 1'],
+        ['DEL RIO ANTONELLA', 'FILOSOFÍA', 'JUEVES', '09:50', '10:35', 'Salón 1'],
+        ['SILVIO, FAGUNDEZ', 'SOFTWARE', 'JUEVES', '10:40', '11:25', 'Salón 1'],
+        ['SILVIO, FAGUNDEZ', 'SOFTWARE', 'JUEVES', '11:25', '12:10', 'Salón 1'],
+
+        // VIERNES
+        ['BRUNO, CORNELUS', 'INTELIGENCIA ARTIFICIAL', 'VIERNES', '07:30', '08:15', 'Salón 1'],
+        ['BRUNO, CORNELUS', 'INTELIGENCIA ARTIFICIAL', 'VIERNES', '08:15', '09:00', 'Salón 1'],
+        ['KAISER MARCOS', 'ADM SISTEMAS', 'VIERNES', '09:05', '09:50', 'Salón 1'],
+        ['SILVIO, FAGUNDEZ', 'SOFTWARE', 'VIERNES', '09:50', '10:35', 'Salón 1'],
+        ['SILVIO, FAGUNDEZ', 'SOFTWARE', 'VIERNES', '10:40', '11:25', 'Salón 1'],
+        ['MESINGUER ANA', 'SOCIOLOGÍA', 'VIERNES', '11:25', '12:10', 'Salón 1'],
+        ['BRUNO, CORNELUS', 'INTELIGENCIA ARTIFICIAL', 'VIERNES', '12:15', '13:00', 'Salón 1'],
+        ['BRUNO, CORNELUS', 'INTELIGENCIA ARTIFICIAL', 'VIERNES', '13:05', '13:50', 'Salón 1']
+      ];
+
+      const stmt = db.prepare(`INSERT INTO schedules (teacher, subject, day, start_time, end_time, room, status) VALUES (?, ?, ?, ?, ?, ?, 'ocupado')`);
+      scheduleData.forEach(row => stmt.run(row));
+      stmt.finalize();
+    }
+  });
 });
 
 // ----------------- ENDPOINTS DE AUTENTICACIÓN -----------------
@@ -100,7 +179,16 @@ app.post("/api/logout", (req, res) => {
   res.json({ success: true });
 });
 
-// ----------------- ENDPOINTS DE HORARIOS (Lectura libre, Escritura restringida) -----------------
+// ----------------- ENDPOINTS DE BÚSQUEDA -----------------
+app.get("/api/search/courses", (req, res) => {
+  const query = req.query.q ? `%${req.query.q}%` : "%%";
+  db.all(`SELECT * FROM courses WHERE name LIKE ? OR description LIKE ?`, [query, query], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Error al realizar la búsqueda" });
+    res.json(rows || []);
+  });
+});
+
+// ----------------- ENDPOINTS DE HORARIOS -----------------
 app.get("/api/schedules", (req, res) => {
   db.all(`SELECT * FROM schedules`, [], (err, rows) => {
     if (err) return res.status(500).json({ error: "Error al obtener horarios" });
@@ -108,7 +196,6 @@ app.get("/api/schedules", (req, res) => {
   });
 });
 
-// Admin crea un espacio de horario disponible
 app.post("/api/admin/schedules", (req, res) => {
   if (req.session.role !== 'admin') return res.status(403).json({ error: "No autorizado. Solo administradores." });
   const { subject, day, start_time, end_time, room } = req.body;
@@ -119,7 +206,6 @@ app.post("/api/admin/schedules", (req, res) => {
     });
 });
 
-// Profesor toma un horario disponible
 app.post("/api/profesor/claim-schedule/:id", (req, res) => {
   if (req.session.role !== 'profesor') return res.status(403).json({ error: "Solo los profesores pueden tomar horarios." });
   const scheduleId = req.params.id;
@@ -142,7 +228,7 @@ app.delete("/api/schedules/:id", (req, res) => {
   });
 });
 
-// ----------------- ENDPOINTS DE AUSENCIAS -----------------
+// ----------------- ENDPOINTS DE AUSENCIAS Y LISTA NEGRA -----------------
 app.get("/api/absences", (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: "No autorizado" });
 
@@ -155,14 +241,13 @@ app.get("/api/absences", (req, res) => {
       res.json(rows || []);
     });
   } else {
-    // Los alumnos no pueden ver faltas o ausencias detalladas de profesores por privacidad
-    res.status(403).json({ error: "No autorizado para ver ausencias." });
+    res.status(403).json({ error: "No autorizado." });
   }
 });
 
 app.post("/api/absences", (req, res) => {
   if (req.session.role !== 'profesor' && req.session.role !== 'admin') {
-    return res.status(403).json({ error: "Los alumnos no pueden registrar ausencias." });
+    return res.status(403).json({ error: "Acceso denegado." });
   }
   const { date, reason } = req.body;
   const teacher = req.session.name;
@@ -172,7 +257,6 @@ app.post("/api/absences", (req, res) => {
   });
 });
 
-// Endpoint de Lista Negra (Exclusivo Admin)
 app.get("/api/admin/blacklist", (req, res) => {
   if (req.session.role !== 'admin') return res.status(403).json({ error: "Acceso denegado. Solo para administradores." });
 
@@ -186,7 +270,7 @@ app.get("/api/admin/blacklist", (req, res) => {
   });
 });
 
-// ----------------- ENDPOINTS DE NOTICIAS Y AVISOS (Lectura libre) -----------------
+// ----------------- ENDPOINTS DE NOTICIAS Y AVISOS -----------------
 app.get("/api/news", (req, res) => {
   db.all(`SELECT * FROM news`, [], (err, rows) => {
     res.json(rows || []);
@@ -195,7 +279,7 @@ app.get("/api/news", (req, res) => {
 
 app.post("/api/news", (req, res) => {
   if (req.session.role !== 'admin') {
-    return res.status(403).json({ error: "Solo los administradores pueden crear o editar noticias." });
+    return res.status(403).json({ error: "Solo los administradores pueden publicar noticias o avisos." });
   }
   const { title, content } = req.body;
   const author = req.session.name;
@@ -205,10 +289,14 @@ app.post("/api/news", (req, res) => {
   });
 });
 
-// ----------------- CHATBOT INTELIGENTE Y AVANZADO -----------------
+// ----------------- CHATBOT (EXCLUSIVO PROFESORES Y ADMINS) -----------------
 app.post("/api/chatbot", async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: "No autorizado" });
+  }
+
+  if (req.session.role === 'alumno') {
+    return res.status(403).json({ error: "El asistente virtual (chatbot) es exclusivo para profesores y administradores. Los alumnos solo pueden visualizar los avisos, noticias y horarios publicados." });
   }
 
   const { message } = req.body;
@@ -217,11 +305,7 @@ app.post("/api/chatbot", async (req, res) => {
   const currentTeacherName = req.session.name;
 
   try {
-    // 1. GENERAR IMAGEN MEDIANTE DALL-E (Solo Admin o Profesor por costo/recurso, o general)
     if (query.includes("imagen") || query.includes("genera una imagen") || query.includes("foto") || query.includes("crear imagen")) {
-      if (currentRole === 'alumno') {
-        return res.json({ answer: "⛔ Los alumnos no tienen permisos para generar imágenes mediante IA en este sistema." });
-      }
       try {
         const response = await openai.images.generate({
           model: "dall-e-3",
@@ -235,7 +319,18 @@ app.post("/api/chatbot", async (req, res) => {
         return res.json({ answer: "No se pudo generar la imagen. Revisa la clave de API de OpenAI." });
       }
     }
-    // 2. CONSULTAR LISTA NEGRA (EXCLUSIVO ADMIN)
+    else if (query.includes("tecnologías de la información") || query.includes("bachillerato tecnológico") || query.includes("curso") || query.includes("horario") || query.includes("cuadrilla")) {
+      db.all("SELECT * FROM schedules", [], (err, rows) => {
+        if (err || rows.length === 0) return res.json({ answer: "No hay horarios registrados." });
+        let markdownTable = "📚 **Curso: 3º MF. Tec. de la Información - BT**\n\n";
+        markdownTable += "| Día | Horario | Materia | Profesor | Salón |\n";
+        markdownTable += "|---|---|---|---|---|\n";
+        rows.forEach(r => {
+          markdownTable += `| ${r.day} | ${r.start_time} - ${r.end_time} | ${r.subject} | ${r.teacher} | ${r.room} |\n`;
+        });
+        res.json({ answer: markdownTable });
+      });
+    }
     else if (query.includes("lista negra") || query.includes("profesores sancionados") || query.includes("muchas faltas")) {
       if (currentRole !== 'admin') {
         return res.json({ answer: "⛔ Lo siento, este comando es estrictamente confidencial y solo está disponible para los **administradores**." });
@@ -249,7 +344,6 @@ app.post("/api/chatbot", async (req, res) => {
         res.json({ answer: txt });
       });
     }
-    // 3. CONSULTAR AVISOS / NOTICIAS (Disponible para todos, incluidos alumnos)
     else if (query.includes("noticia") || query.includes("aviso") || query.includes("novedad")) {
       db.all("SELECT * FROM news ORDER BY id DESC LIMIT 5", [], (err, rows) => {
         if (err || rows.length === 0) return res.json({ answer: "📰 No hay avisos o noticias publicadas por el momento." });
@@ -260,51 +354,22 @@ app.post("/api/chatbot", async (req, res) => {
         res.json({ answer: txt });
       });
     }
-    // 4. CONSULTAR DISPONIBILIDAD DE HORARIOS (Disponible para alumnos y todos)
-    else if (query.includes("disponible") || query.includes("ocupado") || query.includes("estado de horarios") || query.includes("horarios")) {
-      db.all("SELECT * FROM schedules", [], (err, rows) => {
-        if (err || rows.length === 0) return res.json({ answer: "No hay horarios registrados en el sistema." });
-        
-        let txt = "📊 **Estado actual de los horarios:**\n\n";
-        rows.forEach(r => {
-          const estadoIcono = r.status === 'disponible' ? '🟢 Disponible' : `🔴 Ocupado por ${r.teacher}`;
-          txt += `- **[${r.day}] ${r.start_time} - ${r.end_time}** | Materia: ${r.subject} | Salón: ${r.room || 'N/A'} -> ${estadoIcono}\n`;
-        });
-        res.json({ answer: txt });
-      });
-    }
-    // 5. GENERAR CUADRILLA EN TABLA MARKDOWN (Disponible para lectura de alumnos)
-    else if (query.includes("generar cuadrilla") || query.includes("ver horario") || query.includes("horario escolar")) {
-      db.all("SELECT * FROM schedules", [], (err, rows) => {
-        if (err || rows.length === 0) {
-          return res.json({ answer: "No hay datos de horarios disponibles para mostrar." });
-        }
-        let markdownTable = "Aquí tienes la cuadrilla de horarios de la institución:\n\n";
-        markdownTable += "| Día | Horario | Materia | Profesor | Salón | Estado |\n";
-        markdownTable += "|---|---|---|---|---|---|\n";
-        rows.forEach(r => {
-          markdownTable += `| ${r.day} | ${r.start_time} - ${r.end_time} | ${r.subject} | ${r.teacher || 'Sin asignar'} | ${r.room || 'N/A'} | ${r.status} |\n`;
-        });
-        res.json({ answer: markdownTable });
-      });
-    }
-    // 6. GESTIÓN DE REEMPLAZOS (Solo profesores)
     else if (query.includes("no puedo") || query.includes("cubrir") || query.includes("reemplazo")) {
-      if (currentRole === 'alumno') {
-        return res.json({ answer: "⛔ Los alumnos no pueden solicitar reemplazos de clases." });
-      }
-      // Lógica de reemplazos para profesores...
-      res.json({ answer: "Función de reemplazos procesada para el profesor." });
+      db.all("SELECT DISTINCT name FROM users WHERE role = 'profesor' AND name != ?", [currentTeacherName], (err, professors) => {
+        if (err || professors.length === 0) {
+          return res.json({ answer: "Lo siento, no encontré a otros profesores registrados en el sistema para realizar un relevo." });
+        }
+        const substitute = professors[Math.floor(Math.random() * professors.length)].name;
+        db.run(`INSERT INTO messages (sender, receiver, content, date) VALUES (?, ?, ?, datetime('now'))`,
+          [currentTeacherName, substitute, `El profesor ${currentTeacherName} solicita cobertura de clase.`], () => {});
+
+        res.json({ answer: `¡Entendido! He notificado al profesor **${substitute}** para ver si puede cubrir tu clase.` });
+      });
     }
-    // 7. RESPUESTA GENERAL O AYUDA SEGÚN ROL
     else {
-      let helpText = "Hola, soy el asistente de EduSync. Como **alumno**, puedes:\n" +
-                     "1. **Ver los avisos y noticias** (escribe: 'ver noticias' o 'avisos').\n" +
-                     "2. **Consultar los horarios y clases** (escribe: 'generar cuadrilla' o 'estado de horarios').\n";
-      if (currentRole !== 'alumno') {
-        helpText += "3. Tienes permisos adicionales según tu rol (profesor/administrador).";
-      }
-      res.json({ answer: helpText });
+      res.json({ 
+        answer: `Hola, ${currentTeacherName}. Como **${currentRole}**, puedes pedirme la cuadrilla del curso escribiendo 'horario' o 'curso'.` 
+      });
     }
 
   } catch (e) {
@@ -312,7 +377,11 @@ app.post("/api/chatbot", async (req, res) => {
   }
 });
 
-// Iniciar servidor en el puerto 3000
-app.listen(3000, () => {
-  console.log("Servidor EduSync corriendo en http://localhost:3000");
-});
+// Exportación para Vercel o ejecución local
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(3000, () => {
+    console.log("Servidor EduSync corriendo en http://localhost:3000");
+  });
+}
+
+module.exports = app;
