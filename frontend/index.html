@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduSync - Gestión Académica</title>
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
   <style>
@@ -26,14 +27,13 @@
       background: white;
       overflow: hidden;
       transition: transform 0.3s ease;
-      display: none; /* Oculto por defecto */
+      display: none;
     }
 
     .robot-3d-container:hover {
       transform: scale(1.1);
     }
 
-    /* Clase cuando el robot está pensando / procesando */
     .robot-3d-container.pensando {
       box-shadow: 0 0 20px #0dcaf0, 0 0 30px #0d6efd;
       animation: pulsoPensando 1s infinite alternate;
@@ -44,7 +44,6 @@
       100% { transform: scale(1.08); }
     }
 
-    /* Contenedor de la ventana del chat */
     .chatbot-container {
       position: fixed;
       bottom: 125px;
@@ -76,41 +75,62 @@
 </head>
 <body>
 
+  <!-- Barra de Navegación Institucional -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm px-4">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="#">🎓 EduSync</a>
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+        🎓 <span class="ms-2">EduSync <small class="fs-6 fw-normal text-light opacity-75">| Gestión Escolar</small></span>
+      </a>
       <div class="d-flex align-items-center">
         <span id="userInfo" class="text-light me-3 small fw-semibold"></span>
-        <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal" id="loginBtnText">Iniciar Sesión</button>
+        <button class="btn btn-outline-light btn-sm d-none" id="logoutBtn" onclick="logoutUser()">Cerrar Sesión</button>
       </div>
     </div>
   </nav>
 
+  <!-- Contenido Principal: Panel de Inicio de Sesión / Dashboard -->
   <div class="container my-5">
-    <div class="p-5 mb-4 bg-white rounded-3 shadow-sm border">
-      <div class="container-fluid py-3">
-        <h1 class="display-5 fw-bold text-primary">Bienvenido a EduSync</h1>
-        <p class="col-md-8 fs-4 text-muted">Plataforma integral para consulta de cursos, horarios institucionales (como 3º BT Tecnologías de la Información), control de ausencias y asistencia inteligente con IA.</p>
-        <hr class="my-4">
-        <p>El asistente virtual con el robot 3D solo está disponible y visible para usuarios con rol de <b>Profesor</b> o <b>Administrador</b>.</p>
+    <div id="mainContentArea">
+      <!-- Tarjeta de Login Centrada -->
+      <div class="row justify-content-center">
+        <div class="col-md-5">
+          <div class="card shadow-sm border-0 p-4 rounded-4 bg-white">
+            <h3 class="text-center mb-4 fw-bold text-dark">Iniciar Sesión</h3>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Correo electrónico</label>
+              <input type="email" id="loginEmail" class="form-control" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Contraseña</label>
+              <input type="password" id="loginPassword" class="form-control" placeholder="********">
+            </div>
+            <button onclick="loginUser()" class="btn btn-primary w-100 py-2 fw-semibold mb-3">Ingresar</button>
+            <div class="text-center">
+              <small class="text-muted">¿No tienes cuenta? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" class="text-decoration-none">Regístrate</a></small>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Robot 3D flotante (Exclusivo para Profesores y Administradores) -->
   <div class="robot-3d-container" id="robotWrapper" onclick="toggleChat()" title="Asistente Virtual 3D">
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.48/build/spline-viewer.js"></script>
     <spline-viewer url="https://prod.spline.design/6Wq1Q7YGyq-iicqP/scene.splinecode" style="width: 100%; height: 100%; pointer-events: none;"></spline-viewer>
   </div>
 
+  <!-- Ventana de Chat del Asistente -->
   <div class="chatbot-container" id="chatContainer">
     <div class="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
       <h6 class="m-0 fw-bold">🤖 Asistente EduSync 3D</h6>
-      <button onclick="toggleChat()" class="btn btn-sm btn-outline-light border-0" style="font-size: 16px;">✕</button>
+      <button onclick="toggleChat()" class="btn btn-sm btn-outline-light border-0">✕</button>
     </div>
     
     <div id="chatMessages" class="chat-messages">
       <div class="mb-2 p-2 bg-light rounded text-dark">
-        <b>🤖 Bot:</b> ¡Hola! Soy tu asistente virtual institucional. Pregúntame por los horarios, cursos o listas negras.
+        <b>🤖 Bot:</b> ¡Hola! Asistente activo para consultas de cursos y horarios institucionales.
       </div>
     </div>
 
@@ -120,64 +140,40 @@
     </div>
   </div>
 
-  <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+  <!-- Modal de Registro -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">Acceso a EduSync</h5>
+          <h5 class="modal-title">Registro en EduSync</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <ul class="nav nav-pills mb-3 justify-content-center" id="pills-tab" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active btn-sm" id="pills-login-tab" data-bs-toggle="pill" data-bs-target="#pills-login" type="button" role="tab">Iniciar Sesión</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link btn-sm" id="pills-register-tab" data-bs-toggle="pill" data-bs-target="#pills-register" type="button" role="tab">Registrarse</button>
-            </li>
-          </ul>
-
-          <div class="tab-content" id="pills-tabContent">
-            <div class="tab-pane fade show active" id="pills-login" role="tabpanel">
-              <div class="mb-3">
-                <label class="form-label small">Correo electrónico</label>
-                <input type="email" id="loginEmail" class="form-control form-control-sm" placeholder="correo@ejemplo.com">
-              </div>
-              <div class="mb-3">
-                <label class="form-label small">Contraseña</label>
-                <input type="password" id="loginPassword" class="form-control form-control-sm" placeholder="********">
-              </div>
-              <button onclick="loginUser()" class="btn btn-primary w-100 btn-sm">Entrar</button>
-            </div>
-
-            <div class="tab-pane fade" id="pills-register" role="tabpanel">
-              <div class="mb-2">
-                <label class="form-label small">Nombre completo</label>
-                <input type="text" id="regName" class="form-control form-control-sm">
-              </div>
-              <div class="mb-2">
-                <label class="form-label small">Correo electrónico</label>
-                <input type="email" id="regEmail" class="form-control form-control-sm">
-              </div>
-              <div class="mb-2">
-                <label class="form-label small">Contraseña</label>
-                <input type="password" id="regPassword" class="form-control form-control-sm">
-              </div>
-              <div class="mb-2">
-                <label class="form-label small">Rol</label>
-                <select id="regRole" class="form-select form-select-sm" onchange="toggleRoleCode()">
-                  <option value="alumno">Alumno</option>
-                  <option value="profesor">Profesor</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </div>
-              <div class="mb-3 d-none" id="codeContainer">
-                <label class="form-label small text-danger">Código especial de rol</label>
-                <input type="text" id="regCode" class="form-control form-control-sm" placeholder="PROFE-2026 o ADMIN-2026">
-              </div>
-              <button onclick="registerUser()" class="btn btn-success w-100 btn-sm">Crear Cuenta</button>
-            </div>
+          <div class="mb-2">
+            <label class="form-label small">Nombre completo</label>
+            <input type="text" id="regName" class="form-control form-control-sm">
           </div>
+          <div class="mb-2">
+            <label class="form-label small">Correo electrónico</label>
+            <input type="email" id="regEmail" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Contraseña</label>
+            <input type="password" id="regPassword" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Rol</label>
+            <select id="regRole" class="form-select form-select-sm" onchange="toggleRoleCode()">
+              <option value="alumno">Alumno</option>
+              <option value="profesor">Profesor</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <div class="mb-3 d-none" id="codeContainer">
+            <label class="form-label small text-danger">Código especial de rol</label>
+            <input type="text" id="regCode" class="form-control form-control-sm" placeholder="PROFE-2026 o ADMIN-2026">
+          </div>
+          <button onclick="registerUser()" class="btn btn-success w-100 btn-sm mt-2">Crear Cuenta</button>
         </div>
       </div>
     </div>
@@ -186,7 +182,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Verificar sesión y permisos al cargar la página
     window.addEventListener('DOMContentLoaded', async () => {
       try {
         const res = await fetch('/api/me');
@@ -194,25 +189,31 @@
         
         const robotWrapper = document.getElementById('robotWrapper');
         const chatContainer = document.getElementById('chatContainer');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const mainArea = document.getElementById('mainContentArea');
 
         if (user && user.name) {
           document.getElementById('userInfo').innerText = `Hola, ${user.name} (${user.role})`;
-          document.getElementById('loginBtnText').innerText = 'Cerrar Sesión';
-          document.getElementById('loginBtnText').setAttribute('onclick', 'logoutUser()');
-          document.getElementById('loginBtnText').removeAttribute('data-bs-toggle');
+          logoutBtn.classList.remove('d-none');
+          
+          // Cambiar vista principal si ya está logueado
+          mainArea.innerHTML = `
+            <div class="p-5 bg-white rounded-3 shadow-sm border">
+              <h1 class="display-5 fw-bold text-primary">Bienvenido, ${user.name}</h1>
+              <p class="col-md-8 fs-4 text-muted">Panel activo para control de cursos, horarios de 3º BT Tecnologías de la Información y asistencia inteligente.</p>
+            </div>
+          `;
 
-          // Mostrar el robot 3D EXCLUSIVAMENTE si es profesor o admin
           if (user.role === 'profesor' || user.role === 'admin') {
             robotWrapper.style.display = 'block';
           } else {
             robotWrapper.style.display = 'none';
-            if (chatContainer) chatContainer.classList.remove('active');
           }
         } else {
           robotWrapper.style.display = 'none';
         }
       } catch (e) {
-        console.error("Error al verificar sesión");
+        console.error("Sesión no iniciada");
       }
     });
 
@@ -291,7 +292,6 @@
       input.value = '';
       messages.scrollTop = messages.scrollHeight;
 
-      // 🤖 Activar modo pensando en el robot 3D
       robotBtn.classList.add('pensando');
 
       try {
@@ -309,7 +309,6 @@
       } catch (e) {
         messages.innerHTML += `<div class="mb-2 p-2 bg-danger-subtle rounded text-danger"><b>Error:</b> No se pudo conectar con el asistente.</div>`;
       } finally {
-        // 🛑 Desactivar modo pensando
         robotBtn.classList.remove('pensando');
       }
     }
@@ -320,6 +319,5 @@
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
     }
   </script>
-
 </body>
 </html>
